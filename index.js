@@ -40,6 +40,80 @@ function initProc(options) {
     return {p};
 }
 
+function delegateFn(callbacks, fnName) {
+    return function() {
+        const fn = callbacks[fnName];
+        if (fn) {
+            return fn(...arguments);
+        }
+    };
+}
+
+/**
+ * Creates a new LineByLine application interface.
+ * @param {*} options {
+ *  // https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options
+ *  spawn: { command, args, options }
+ * }
+ */
+function spawnByteByByte(options) {
+    const wrapper = {
+        onStdout: null,
+        onStderr: null,
+        onExit: null,
+        onClose: null,
+    };
+
+    let proc = null;
+
+    const onCloseExit = fn => code => {
+        proc = null;
+        if (fn) {
+            setTimeout(() => fn(code), 0);
+        }
+    };
+
+    const callbacks = {
+        onStderr: delegateFn(wrapper, 'onStderr'),
+        onClose: onCloseExit(delegateFn(wrapper, 'onClose')),
+        onExit: onCloseExit(delegateFn(wrapper, 'onExit'))
+    };
+
+    const ensureIsRunning = () => {
+        if (!proc) {
+            proc = initProc(Object.assign({callbacks}, options));
+
+            proc.p.stdout.on('data', (data) => {
+                if (wrapper.onStdout) {
+                    wrapper.onStdout(data);
+                }
+            });
+        }
+    };
+    ensureIsRunning();
+
+    return {
+        ensureIsRunning,
+
+        // Will call the given function for every line written to `stdout` by the underlying process.
+        stdout: (handler) => wrapper.onStdout = handler,
+        // Will call the given function for every data written to `stderr` by the underlying process.
+        stderr: (handler) => wrapper.onStderr = handler,
+
+        // Writes to the `stdin` of the underlying process!
+        stdin: (data) => {
+            if (!proc.p.stdin.write(data)) {
+                logger.error(`Could not write the data to the stdin of the application: ${data}`);
+            }
+        },
+
+        onExit: (handler) => wrapper.onExit = handler,
+        onClose: (handler) => wrapper.onClose = handler,
+
+        __internal_p__: () => proc.p,
+    };
+}
+
 function setupReadLine(p, onStdout) {
     // https://nodejs.org/api/readline.html#readline_event_line
     const rl = readline.createInterface({ input: p.stdin, output: p.stdout });
@@ -49,15 +123,6 @@ function setupReadLine(p, onStdout) {
         }
     });
     return rl;
-}
-
-function delegateFn(callbacks, fnName) {
-    return function() {
-        const fn = callbacks[fnName];
-        if (fn) {
-            return fn(...arguments);
-        }
-    };
 }
 
 /**
@@ -129,5 +194,5 @@ function spawnLineByLine(options) {
 }
 
 module.exports = {
-    spawnLineByLine
+    spawnLineByLine, spawnByteByByte
 };

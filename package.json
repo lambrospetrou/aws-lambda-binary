@@ -1,0 +1,23 @@
+{
+  "name": "aws-lambda-binary",
+  "version": "0.1.0",
+  "description": "Removes the boilerplate of running binary executables in your lambda. Allows you to start the process during the static section of Lambda and then communicate with them over stdio during function invocation.",
+  "main": "wrapper.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "keywords": [
+    "aws", "awslambda", "lambda", "cloud", "amazon", "racket", "golang", "binary", "executable"
+  ],
+  "author": "Lambros Petrou <lambrospetrou@gmail.com> (https://www.lambrospetrou.com)",
+  "license": "MIT",
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/lambrospetrou/aws-lambda-binary.git"
+  },
+  "engines": {
+    "node" : ">=6.0.0"
+  }
+}
