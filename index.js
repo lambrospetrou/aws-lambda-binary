@@ -50,7 +50,7 @@ function delegateFn(callbacks, fnName) {
 }
 
 /**
- * Creates a new LineByLine application interface.
+ * Creates a new ByteByByte application interface.
  * @param {*} options {
  *  // https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options
  *  spawn: { command, args, options }
@@ -95,9 +95,9 @@ function spawnByteByByte(options) {
     return {
         ensureIsRunning,
 
-        // Will call the given function for every line written to `stdout` by the underlying process.
+        // Will call the given function for data written to `stdout` by the underlying process.
         stdout: (handler) => wrapper.onStdout = handler,
-        // Will call the given function for every data written to `stderr` by the underlying process.
+        // Will call the given function for data written to `stderr` by the underlying process.
         stderr: (handler) => wrapper.onStderr = handler,
 
         // Writes to the `stdin` of the underlying process!
