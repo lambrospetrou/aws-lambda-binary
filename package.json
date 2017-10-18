@@ -1,6 +1,6 @@
 {
   "name": "aws-lambda-binary",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Removes the boilerplate of running binary executables in your lambda. Allows you to start the process during the static section of Lambda and then communicate with them over stdio during function invocation.",
   "main": "index.js",
   "dependencies": {},
