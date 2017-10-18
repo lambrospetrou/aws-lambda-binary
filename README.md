@@ -29,21 +29,113 @@ const application = spawnLineByLine({
 exports.handler = function (event, context) {
     application.ensureIsRunning();
 
-    // Register the handler we want for each line response!
     application.stdout((result) => {
         context.done(null, result);
     });
 
-    // Send the input to our application (`cat` in this case)
     application.stdin(JSON.stringify(event));
 };
 ```
+
+## Documentation
+
+The package provides two process builders based on the protocol/communication type between your wrapper and your binary.
+
+If you want easy line-by-line communication you can use the ```spawnLineByLine()``` function, and if you want byte-by-byte communication you can use ```spawnByteByByte()``` to start up your binary process.
+
+### Line-by-Line
+
+#### spawnLineByLine(options)
+
+Creates a new helper object to ease the communication with the given command's binary process over a simple line by line protocol.
+
+The ```options``` argument contains all the information needed to start the binary process we want. You can pass an object containing the **spawn** property, which contains the exact arguments as described in https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options
+
+```javascript
+const application = require('aws-lambda-binary').spawnLineByLine({
+    spawn: {command: 'cat'}
+}); 
+```
+
+You can use the returned ```application``` object to send/receive lines of data to/from the process (in the example above to the ```cat``` command).
+
+In AWS Lambda you should put this line in the static section of your lambda code, otherwise if you put it in the function code a new process will be created every time. 
+
+#### application.ensureIsRunning()
+
+Makes sure that the underlying process has not exited or closed, and if it did then it restarts it using the options passed to the ```spawnLineByLine()``` call.
+
+#### application.stdout(callback)
+
+Will set the given ```callback``` function to be called for every line written to **stdout** by the underlying process. Callback should receive an argument with the line read, which should not include the newline ```\n``` character.
+
+```javascript
+application.stdout((line) => {
+    console.log('Line received in standard output', line);
+});
+```
+
+#### application.stdin(data)
+
+Will write the given ```data``` to **stdin** of the underlying process, appending a ```\n (new line)``` character at the end.
+
+```javascript
+application.stdin('Write this string to the stdin of the process!');
+```
+
+#### application.stderr(callback)
+
+Will set the given ```callback``` function to be called for every data written to **stderr** by the underlying process. This **is not** necessarily a full line!
+
+```javascript
+application.stdout((data) => {
+    console.log('Data received in standard error', data);
+});
+```
+
+#### application.onExit(callback)
+
+Will set the given ```callback``` function to be called when the underlying process exits. The ```callback``` function receives the exit code.
+
+```javascript
+application.onExit((exitCode) => {
+    console.log('Exit code received', exitCode);
+});
+```
+
+As explained in https://nodejs.org/api/child_process.html#child_process_event_exit
+
+#### application.onClose(callback)
+
+Will set the given ```callback``` function to be called when the underlying process closes. The ```callback``` function receives the exit code.
+
+```javascript
+application.onClose((exitCode) => {
+    console.log('Exit code received', exitCode);
+});
+```
+
+As explained in https://nodejs.org/api/child_process.html#child_process_event_close
+
+### Byte-by-Byte
+
+The exact same API exists for the byte-by-byte protocol, with the only difference that the ```application.stdin(data)``` and ```application.stdout(callback)``` functions are not using lines. So the ```stdin(data)``` function will just write the given data to the standard input of the underlying process, without appending a new line character. Similarly, the ```stdout(callback)``` method will set the callback to be called whenever there is data written to standard output by the underlying process, instead of full lines.
+
+**Attention**
+
+The fact that this protocol is not based on lines means that it's up to **you** the developer to make sure that the standard input or output are flushed from the underlying binary process so that the wrapper code can read it completely. Same goes for the wrapper code writing to the process.
 
 ## Communication protocol helpers
 
 This package provides communication helpers for line-by-line protocols, and raw bytes protocols.
 
 You can contribute to the package by adding new communication helpers and making a Pull Request. However with the **line-by-line** and **byte-by-byte** protocols I think you can pretty much do anything.
+
+## Contributing
+
+I am happy to accept Pull Requests, as long as it's functionality needed by many cases, or it makes it easier (less code) to communicate with the underlying process.
+
+Also, feel free to open any issues or even fix any bug you might encounter.
 
 ## npm package
 
