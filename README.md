@@ -117,6 +117,10 @@ application.onClose((exitCode) => {
 
 As explained in https://nodejs.org/api/child_process.html#child_process_event_close
 
+#### application.kill(signal)
+
+Just forward the given signal to the underlying spawned process' ```kill()``` method as explained in https://nodejs.org/api/child_process.html#child_process_subprocess_kill_signal
+
 ### Byte-by-Byte
 
 The exact same API exists for the byte-by-byte protocol, with the only difference that the ```application.stdin(data)``` and ```application.stdout(callback)``` functions are not using lines. So the ```stdin(data)``` function will just write the given data to the standard input of the underlying process, without appending a new line character. Similarly, the ```stdout(callback)``` method will set the callback to be called whenever there is data written to standard output by the underlying process, instead of full lines.
