@@ -10,7 +10,7 @@ It is stable enough for use so upgrading the minor version, to allow me to work 
 
 The first fully correct implementation. Covered with unit tests.
 
-## < 0.1.3
+## <= 0.1.3
 
 **BROKEN**
 
