@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 - 2017-10-30
+
+Added some more tests for multiple communication with the underlying process.
+
+It is stable enough for use so upgrading the minor version, to allow me to work on some minor improvements before upgrading major version.
+
 ## 0.1.4 - 2017-10-29
 
 The first fully correct implementation. Covered with unit tests.
