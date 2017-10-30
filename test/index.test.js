@@ -179,16 +179,16 @@ repeatForAllProtocols(spawnFn => {
     afterEach(done => exitCmd(application, done));
 
     it('should be able to communicate multiple times - sum', (done) => {
-      let dataToWrite = '', total = 100, sum = 0;
+      let dataToWrite = '', total = 1000, sum = 0;
       for (let i=0; i<total; i++) {
         const n = i%10;
         sum += n;
         dataToWrite += String(n);
       }
   
-      application = spawnLineByLine(cmdSum);
+      application = spawnFn(cmdSum);
       application.stdout(line => {
-        const segments = line.split(' ');
+        const segments = String(line).split(' ');
         if (Number(segments[0]) === total) {
           expect(Number(segments[1])).to.eql(sum);
           done();
