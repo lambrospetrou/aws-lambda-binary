@@ -30,12 +30,19 @@ const cmdEcho = {
   withLogging: false
 };
 
-const cmdDouble = {
+const cmdSum = {
   spawn: {
     command: "node",
-    args: ["-e", `process.stdin.on('data', (data) => {
-      process.stdout.write(String(data)+String(data));
-    });`]
+    args: [ "-e", `
+      let sum = 0, totalNumbers = 0;
+      process.stdin.on('data', (data) => {
+        const arr = String(data).split('').filter(c => c !== "\\n");
+        arr.forEach(n => sum += Number(n));
+        totalNumbers += arr.length;
+        process.stdout.write(\`\${totalNumbers} \${String(sum)}\n\`);
+      });
+    `
+    ]
   },
   withLogging: false
 };
@@ -166,35 +173,50 @@ repeatForAllProtocols(spawnFn => {
   });
 });
 
-describe('spawnLineByLine::stdin/stdout', () => {
-  const input = JSON.stringify({key: "value"});
-  let application = null;
+repeatForAllProtocols(spawnFn => {
+  describe(`${spawnFn.name}::stdin/stdout multiple times`, () => {
+    let application = null;
+    afterEach(done => exitCmd(application, done));
 
-  afterEach(done => exitCmd(application, done));
-
-  it('should output double whatever we input', (done) => {
-    application = spawnLineByLine(cmdDouble);
-    let times = 0;
-    application.stdout(line => {
-      expect(line).to.equal(input);
-      if (++times === 2) {
-        done();
+    it('should be able to communicate multiple times - sum', (done) => {
+      let dataToWrite = '', total = 100, sum = 0;
+      for (let i=0; i<total; i++) {
+        const n = i%10;
+        sum += n;
+        dataToWrite += String(n);
+      }
+  
+      application = spawnLineByLine(cmdSum);
+      application.stdout(line => {
+        const segments = line.split(' ');
+        if (Number(segments[0]) === total) {
+          expect(Number(segments[1])).to.eql(sum);
+          done();
+        }
+      });
+  
+      for (let i=0; i<total; i++) {
+        application.stdin(dataToWrite[i]);
       }
     });
-    application.stdin(input);
   });
+});
 
-  it('should be able to communicate multiple times', (done) => {
+describe('spawnLineByLine::stdin/stdout', () => {
+  let application = null;
+  afterEach(done => exitCmd(application, done));
+
+  it('should be able to communicate multiple times - echo', (done) => {
     application = spawnLineByLine(cmdEcho);
     let read = 0, total = 1000;
     application.stdout(line => {
-      expect(line).to.equal(input + String(read++));
+      expect(line).to.equal('text' + String(read++));
       if (read === total) {
         done();
       }
     });
     for (let i=0; i<total; i++) {
-      application.stdin(input + String(i));
+      application.stdin(`text${String(i)}`);
     }
   });
 });
@@ -203,8 +225,8 @@ describe('spawnByteByByte::stdin/stdout', () => {
   let application = null;
   afterEach(done => exitCmd(application, done));
 
-  it('should be able to communicate multiple times', (done) => {
-    let dataToWrite = '', total = 100;
+  it('should be able to communicate multiple times - echo', (done) => {
+    let dataToWrite = '', total = 1000;
     for (let i=0; i<total; i++) {
       dataToWrite += (String(i%10) + '\n');
     }
